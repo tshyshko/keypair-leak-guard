@@ -1,0 +1,4 @@
+#!/bin/sh
+# Plain git pre-commit hook. Install: cp hooks/pre-commit .git/hooks/pre-commit (or: git config core.hooksPath hooks)
+# Scans only staged blobs (git diff --cached --name-only --diff-filter=ACM, content via git show :path).
+exec node "$(git rev-parse --show-toplevel)/hooks/keyguard.mjs" --staged

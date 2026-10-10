@@ -1,0 +1,3 @@
+# demonstrates the escape hatch: this synthetic seed sits next to an agent id but is allowed on its line
+ag_FAKExSyntheticxTestxAgentxNotRea
+seed: abad1deaabad1deaabad1deaabad1deaabad1deaabad1deaabad1deaabad1dea KEYGUARD:ALLOW

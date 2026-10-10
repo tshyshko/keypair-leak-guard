@@ -1,0 +1,10 @@
+# pre-commit framework config. Scans every staged file (no `files:`/`types:` filter, so .txt, .env
+# and extensionless files are all included); keyguard reads each file's staged blob.
+repos:
+  - repo: local
+    hooks:
+      - id: keypair-leak-guard
+        name: keypair-leak-guard
+        entry: node hooks/keyguard.mjs --files
+        language: system
+        pass_filenames: true

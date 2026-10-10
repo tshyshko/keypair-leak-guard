@@ -1,0 +1,5 @@
+- id: keypair-leak-guard
+  name: keypair-leak-guard
+  entry: node hooks/keyguard.mjs --files
+  language: node
+  pass_filenames: true

@@ -1,0 +1,8 @@
+name: keypair-leak-guard
+description: Fail CI when a BasedAgents keypair (SDK JSON, npm CLI JSON, raw seed near an agent id, or .basedagents/keys/*) is committed.
+runs:
+  using: composite
+  steps:
+    - name: keyguard --all (every tracked file, no extension allowlist, no file cap)
+      shell: bash
+      run: node "$GITHUB_ACTION_PATH/hooks/keyguard.mjs" --all
