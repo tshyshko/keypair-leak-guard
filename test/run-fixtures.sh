@@ -22,4 +22,34 @@ mkdir -p .basedagents/keys; cp "$ROOT/fixtures/keys-path.fixture" .basedagents/k
 cp "$ROOT/fixtures/allowed-line.txt" allowed.txt; git add allowed.txt; expect "KEYGUARD:ALLOW escape" pass
 # staged blob, not working tree: stage a key, then clean the working copy -> must still block
 strip sdk-keypair.json.fixture > staged-only.json; git add staged-only.json; echo '{}' > staged-only.json; expect "staged blob scanned, not working tree" block KG001
+# --- revision 3 cases ---
+# rename (R): commit a placeholder example, git mv it to the real name, put a 64-hex value in private_key_hex -> must block
+cp "$ROOT/fixtures/agent-keypair.example.json" agent-keypair.example.json; git add agent-keypair.example.json; expect "placeholder example keypair" pass
+git mv agent-keypair.example.json agent-keypair.json
+sed -i 's/<64 hex chars - never commit>/deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef/' agent-keypair.json; git add agent-keypair.json
+echo "\$ git diff --cached --name-status -M"; git diff --cached --name-status -M
+expect "rename example -> agent-keypair.json with a 64-hex private_key_hex" block KG001
+# pure rename into .basedagents/keys/ (no content change) -> must block KG004
+mkdir -p .basedagents/keys; git mv agent-keypair.example.json .basedagents/keys/agent.json
+echo "\$ git diff --cached --name-status -M"; git diff --cached --name-status -M
+expect "git mv into .basedagents/keys/" block KG004
+# type change (T): a committed symlink replaced by a regular file holding a key -> must block
+ln -s clean.txt linked.json; git add linked.json; expect "symlink (clean)" pass
+rm linked.json; strip sdk-keypair.json.fixture > linked.json; git add linked.json
+echo "\$ git diff --cached --name-status"; git diff --cached --name-status
+expect "type change symlink -> file with key" block KG001
+# public chain data: GET /v1/chain/latest (entry_hash, previous_hash, public_key next to agent_id) -> must pass
+cp "$ROOT/fixtures/chain-latest.public.json" chain-latest.json; git add chain-latest.json; expect "public /v1/chain/latest response" pass
+# gitlink (submodule, mode 160000): commit passes and --all skips + counts it instead of exiting 3
+git update-index --add --cacheinfo "160000,$(git rev-parse HEAD),vendor/sub"; expect "add submodule gitlink" pass
+echo '$ node hooks/keyguard.mjs --all'; out=$(node hooks/keyguard.mjs --all 2>&1); rc=$?; echo "$out"; echo "exit=$rc"
+if [ $rc -eq 0 ] && grep -q 'gitlinks_skipped=1' <<<"$out"; then echo "TEST OK: --all with a gitlink -> exit 0, gitlinks_skipped=1"; else echo "TEST FAIL: --all with a gitlink"; fail=1; fi
+echo
+# README cp install: fresh repo WITHOUT hooks/, hook files copied into .git/hooks/
+F=$(mktemp -d); cd "$F"; git init -q; git config user.email ci@example.invalid; git config user.name keyguard-test
+echo '$ cp hooks/pre-commit hooks/keyguard.mjs .git/hooks/   # fresh repo, no hooks/ dir, no core.hooksPath'
+cp "$ROOT/hooks/pre-commit" "$ROOT/hooks/keyguard.mjs" .git/hooks/; ls hooks 2>/dev/null || echo "(no hooks/ dir in this repo)"
+cp "$ROOT/fixtures/clean.txt" clean.txt; git add clean.txt; expect "cp install: clean commit in a fresh repo" pass
+strip sdk-keypair.json.fixture > agent-keypair.json; git add agent-keypair.json; expect "cp install: sdk keypair json" block KG001
+echo "fixtures result: fail=$fail"
 exit $fail

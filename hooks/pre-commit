@@ -1,4 +1,7 @@
 #!/bin/sh
-# Plain git pre-commit hook. Install: cp hooks/pre-commit .git/hooks/pre-commit (or: git config core.hooksPath hooks)
-# Scans only staged blobs (git diff --cached --name-only --diff-filter=ACM, content via git show :path).
-exec node "$(git rev-parse --show-toplevel)/hooks/keyguard.mjs" --staged
+# Plain git pre-commit hook. Install either way:
+#   git config core.hooksPath hooks                                  (uses hooks/ in this repo)
+#   cp hooks/pre-commit hooks/keyguard.mjs .git/hooks/              (any repo; keyguard.mjs sits next to this file)
+# keyguard.mjs is loaded from this hook's own directory, so both installs work in repos that do not contain hooks/.
+# Scans only staged blobs (git diff --cached --name-only --diff-filter=ACMRT, content via git show :path).
+exec node "$(dirname "$0")/keyguard.mjs" --staged

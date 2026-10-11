@@ -1,5 +1,8 @@
+# Hook definition for consumers: `repos: - repo: https://github.com/tshyshko/keypair-leak-guard  rev: <sha>  hooks: - id: keypair-leak-guard`
+# language: script runs hooks/keyguard.mjs from the cloned hook repo (needs node >= 18 on PATH); it reads each
+# passed file's staged blob in the consumer repo.
 - id: keypair-leak-guard
   name: keypair-leak-guard
-  entry: node hooks/keyguard.mjs --files
-  language: node
+  entry: hooks/keyguard.mjs --files
+  language: script
   pass_filenames: true
